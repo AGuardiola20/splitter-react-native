@@ -5,16 +5,18 @@ import TotalItem from "./TotalItem";
 import useFont from "../hooks/useFont";
 
 interface Props {
-  amount: number;
+  tipTotal: number;
+  total: number;
+  reset: () => void;
 }
 
-const TotalCard: React.FC<Props> = ({ amount }) => {
+const TotalCard: React.FC<Props> = ({ tipTotal, total, reset }) => {
   const font = useFont();
   return (
     <View style={styles.container}>
-      <TotalItem title="Tip Amount" amount={amount} />
-      <TotalItem title="Total" amount={amount} />
-      <TouchableOpacity style={styles.button}>
+      <TotalItem title="Tip Amount" amount={parseFloat(tipTotal.toFixed(2))} />
+      <TotalItem title="Total" amount={parseFloat(total.toFixed(2))} />
+      <TouchableOpacity style={styles.button} onPress={reset}>
         <Text style={[styles.buttonText, { fontFamily: font }]}>Reset</Text>
       </TouchableOpacity>
     </View>

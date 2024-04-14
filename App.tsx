@@ -1,7 +1,7 @@
 import { Text, View, StyleSheet } from "react-native";
 import { colors } from "./colors";
 import InputForm from "./components/InputForm";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useFont from "./hooks/useFont";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Tip from "./components/Tip";
@@ -9,25 +9,68 @@ import TitleSection from "./components/TitleSection";
 import TotalCard from "./components/TotalCard";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
-const TIPS = [5, 10, 15, 25, 50];
-
 export default function App() {
   const [billValue, setBillValue] = useState("");
   const [numberPeople, setNumberPeople] = useState("");
-  const [selectedTip, setSelectedTip] = useState();
-  const [isActive, setIsActive] = useState();
+  const [tipChanged, setTipChanged] = useState(0);
+  const [tipTotal, setTipTotal] = useState(0);
+  const [total, setTotal] = useState(0);
   const font = useFont();
-  const isTipActive = false;
+
+  const [tips, setTips] = useState([
+    { tip: 5, active: false, percentage: 0.05 },
+    { tip: 10, active: false, percentage: 0.1 },
+    { tip: 15, active: false, percentage: 0.15 },
+    { tip: 20, active: false, percentage: 0.2 },
+    { tip: 50, active: false, percentage: 0.5 },
+    { tip: "Custom", active: false, percentage: 0.5 },
+  ]);
+
   const handlerBillValueChange = (text: string) => {
     const numericValue = text.replace(/[^0-9]/g, "");
     setBillValue(numericValue);
+    setTotal(parseInt(numericValue) + tipTotal);
   };
-  const handleTipPress = (tip) => {
-    setSelectedTip(tip);
+  const handleTipPress = (index: number) => {
+    const updatedTips = tips.map((tip, i) => {
+      if (i === index) {
+        return { ...tip, active: !tip.active };
+      } else {
+        return { ...tip, active: false };
+      }
+    });
+    setTips(updatedTips);
+    setTipChanged((prevTipChanged) => prevTipChanged + 1);
   };
-  const handleNumberPeople = (people) => {
-    setSelectedTip(people);
+  const handleNumberPeople = (people: string) => {
+    const numericValue = people.replace(/[^0-9]/g, "");
+    setNumberPeople(numericValue);
   };
+  const handlerReset = () => {
+    setBillValue("");
+    setNumberPeople("");
+    setTotal(0);
+    setTipTotal(0);
+    const updatedTips = tips.map((tip, i) => {
+      return { ...tip, active: false };
+    });
+    setTips(updatedTips);
+  };
+
+  useEffect(() => {
+    const tipPercentage = getTipPercentage();
+    if (parseInt(billValue) >= 0 && tipPercentage !== undefined) {
+      setTipTotal(parseInt(billValue) * tipPercentage.percentage);
+    }
+  }, [billValue, tipChanged]);
+  useEffect(() => {
+    setTotal(parseInt(billValue) + tipTotal);
+  }, [tipTotal]);
+
+  function getTipPercentage() {
+    const tipPercentage = tips.filter((tip) => tip.active === true)[0];
+    return tipPercentage;
+  }
 
   return (
     <KeyboardAwareScrollView scrollEnabled={true}>
@@ -62,38 +105,30 @@ export default function App() {
 
           <View>
             <TitleSection title="Select Tip %" />
-            <View style={{ gap: 20 }}>
-              <View style={styles.tipRow}>
-                <Tip
-                  tip={5}
-                  isActive={isTipActive}
-                  selectedTip={handleTipPress}
-                />
-                <Tip
-                  tip={10}
-                  isActive={isTipActive}
-                  selectedTip={handleTipPress}
-                />
+            <View
+              style={{ flexDirection: "row", justifyContent: "space-between" }}
+            >
+              <View style={{ flex: 1, gap: 15, marginRight: 15 }}>
+                {tips.slice(0, Math.ceil(tips.length / 2)).map((tip, index) => (
+                  <Tip
+                    key={index}
+                    tip={tip.tip}
+                    isActive={tip.active}
+                    selectedTip={() => handleTipPress(index)}
+                  />
+                ))}
               </View>
-              <View style={styles.tipRow}>
-                <Tip tip={15} isActive={true} selectedTip={handleTipPress} />
-                <Tip
-                  tip={25}
-                  isActive={isTipActive}
-                  selectedTip={handleTipPress}
-                />
-              </View>
-              <View style={styles.tipRow}>
-                <Tip
-                  tip={50}
-                  isActive={isTipActive}
-                  selectedTip={handleTipPress}
-                />
-                <Tip
-                  tip={"Custom"}
-                  isActive={isTipActive}
-                  selectedTip={handleTipPress}
-                />
+              <View style={{ flex: 1, gap: 15 }}>
+                {tips.slice(Math.ceil(tips.length / 2)).map((tip, index) => (
+                  <Tip
+                    key={index}
+                    tip={tip.tip}
+                    isActive={tip.active}
+                    selectedTip={() =>
+                      handleTipPress(index + Math.ceil(tips.length / 2))
+                    }
+                  />
+                ))}
               </View>
             </View>
           </View>
@@ -108,7 +143,17 @@ export default function App() {
           </View>
 
           <View>
-            <TotalCard amount={30} />
+            <TotalCard
+              tipTotal={tipTotal}
+              total={
+                numberPeople === ""
+                  ? total
+                  : parseInt(billValue) >= 0
+                  ? parseInt(billValue) / parseInt(numberPeople) + tipTotal
+                  : 0
+              }
+              reset={handlerReset}
+            />
           </View>
         </View>
       </SafeAreaView>
