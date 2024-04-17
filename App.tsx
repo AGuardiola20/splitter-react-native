@@ -78,6 +78,7 @@ export default function App() {
         style={{
           flex: 1,
           backgroundColor: colors.lightGrayishCyan,
+          paddingVertical: 30,
         }}
       >
         <View style={{ alignItems: "center", paddingVertical: 34 }}>
