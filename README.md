@@ -39,7 +39,7 @@ https://github.com/AGuardiola20/tipCalculator-react-native.git
 ```
 2. Change to the project directory
 ```
-cd fitness-react-native
+cd tipCalculator-react-native
 ```
 
 3. Install dependecies
